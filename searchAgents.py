@@ -52,6 +52,114 @@ class GoWestAgent(Agent):
             return Directions.WEST
         else:
             return Directions.STOP
+        
+class ExplorationProblem(search.SearchProblem):
+    """
+    Problema auxiliar para TestAgent.
+    No tiene objetivo: el agente explora todo lo posible.
+    Registra celdas visitadas para las estadísticas de la Actividad 2.
+    """
+
+    def __init__(self, gameState):
+        self.walls = gameState.getWalls()
+        self.startState = gameState.getPacmanPosition()
+        self.costFn = lambda x: 1
+        self._expanded = 0
+
+        # Celdas alcanzables registradas durante getSuccessors
+        self.visited_cells = set()
+        self.visited_cells.add(self.startState)
+
+    def getStartState(self):
+        return self.startState
+
+    def isGoalState(self, state):
+        """No hay objetivo: nunca termina por goal, solo cuando la pila se vacía."""
+        return False
+
+    def getSuccessors(self, state):
+        successors = []
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = state
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                next_state = (nextx, nexty)
+                self.visited_cells.add(next_state)
+                successors.append((next_state, action, 1))
+        self._expanded += 1
+        return successors
+
+    def getCostOfActions(self, actions):
+        if actions is None:
+            return 999999
+        x, y = self.startState
+        cost = 0
+        for action in actions:
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]:
+                return 999999
+            cost += self.costFn((x, y))
+        return cost
+        
+
+class TestAgent(Agent):
+    """
+    Agente explorador que recorre el mayor número posible de celdas
+    del laberinto usando DFS con backtracking (función exploration en search.py).
+
+    Gestiona internamente:
+      - self.actions: plan completo calculado al inicio
+      - self.actionIndex: puntero al siguiente movimiento a ejecutar
+      - Estadísticas: coste acumulado, pasos totales, celdas únicas, ratio
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.actions = []
+        self.actionIndex = 0
+
+    def registerInitialState(self, state):
+        """
+        Se ejecuta una sola vez al inicio de la partida.
+        Calcula el plan completo de exploración y muestra estadísticas.
+        """
+        
+        start_time = time.time()
+
+        problem = ExplorationProblem(state)
+        self.actions = search.exploration(problem)
+        self.actionIndex = 0
+
+        elapsed = time.time() - start_time
+
+        total_steps = len(self.actions)
+        unique_cells = len(problem.visited_cells)
+        ratio = total_steps / unique_cells if unique_cells > 0 else 0
+        cost = problem.getCostOfActions(self.actions)
+
+        print('=== TestAgent - Estadísticas de exploración ===')
+        print(f'  Coste acumulado:         {cost}')
+        print(f'  Total de pasos:          {total_steps}')
+        print(f'  Celdas únicas visitadas: {unique_cells}')
+        print(f'  Ratio de repetición:     {ratio:.2f}')
+        print(f'  Tiempo de cómputo:       {elapsed:.3f}s')
+        print('================================================')
+
+    def getAction(self, state):
+        """
+        Devuelve la siguiente acción del plan calculado.
+        Si el plan se agota, devuelve STOP.
+        """
+        if self.actionIndex < len(self.actions):
+            action = self.actions[self.actionIndex]
+            self.actionIndex += 1
+            return action
+        return Directions.STOP
+        
+
+
 
 #######################################################
 # This portion is written for you, but will only work #

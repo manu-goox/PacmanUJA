@@ -116,8 +116,120 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directi
 
 
 def exploration(problem):
-     # Stack for DFS traversal
-    util.raiseNotDefined()
+    """
+    Exploración completa del laberinto mediante DFS con backtracking explícito.
+
+    El agente avanza hacia celdas no visitadas y, cuando no encuentra ninguna,
+    retrocede paso a paso hasta encontrar un camino nuevo. Esto garantiza que
+    el plan de acciones resultante pase físicamente por todas las celdas
+    alcanzables del laberinto.
+
+    Retorna una lista de acciones (Directions) que incluye tanto avances
+    como retrocesos, cubriendo el máximo de casillas posible.
+    """
+
+    # Mapa de dirección opuesta para poder retroceder
+    opposite = {
+        Directions.NORTH: Directions.SOUTH,
+        Directions.SOUTH: Directions.NORTH,
+        Directions.EAST:  Directions.WEST,
+        Directions.WEST:  Directions.EAST,
+    }
+
+    # Casilla Inicial
+    start = problem.getStartState() 
+
+    # Creamos un set con las casillas exploradas y añadimos la inicial
+    visited = set()
+    visited.add(start)
+
+    # Lista de acciones realizadas
+    actions = []
+
+    # Pila del camino actual: lista de acciones tomadas
+    path_stack = []  
+
+    # Variable para saber la posicion actual
+    current = start
+
+    while True:
+        # Buscamos un sucesor no visitado desde la celda actual
+        successors = problem.getSuccessors(current)
+        next_move = None
+
+        # Bucle para encontrar la siguiente celda adyacente no visitada
+        for next_state, action, _ in successors:
+            if next_state not in visited:
+                next_move = (next_state, action)
+                break
+
+        if next_move is not None:
+
+            # Hay celda nueva por tanto, avanzamos hacia ella
+            next_state, action = next_move
+
+            # Añadimos a las casillas visitadas la siguiente celda
+            visited.add(next_state)
+
+            # Añadimos a las acciones realizadas
+            actions.append(action)
+            path_stack.append(action)
+
+            # Actualizamo la posicion actual
+            current = next_state
+
+        elif next_move is None:
+            if not path_stack:
+                break
+            
+            # No hay posibles movimientos asi que retrocederemos una accion
+            last_action = path_stack.pop()
+            back_action = opposite[last_action]
+
+            # Añadimos la accion de retroceder a las acciones realizadas
+            actions.append(back_action)
+            
+            # Recalculamos la posición actual retrocediendo
+            dx, dy = {'North': (0,1), 'South': (0,-1), 'East': (1,0), 'West': (-1,0)}[back_action]
+            x, y = current
+            current = (int(x + dx), int(y + dy))           
+
+    
+    return actions
+
+    """
+        while True:
+            # Buscamos un sucesor no visitado desde la celda actual
+            successors = problem.getSuccessors(current)
+            next_move = None
+
+            # Bucle para encontrar la siguiente celda adyacente no visitada
+            for next_state, action, _ in successors:
+                if next_state not in visited:
+                    next_move = (next_state, action)
+                    break
+            
+            if next_move is not None:
+                # Hay celda nueva: avanzamos hacia ella
+                next_state, action = next_move
+                visited.add(next_state)
+                #actions.append(action)
+                path_stack.append(action)
+                current = next_state
+            else:
+                # No hay celda nueva: retrocedemos un paso
+                if not path_stack:
+                    # Hemos vuelto al inicio y no quedan celdas nuevas: fin
+                    break
+                last_action = path_stack.pop()
+                back_action = opposite[last_action]
+                actions.append(back_action)
+                # Recalculamos la posición actual retrocediendo
+                dx, dy = {'North': (0,1), 'South': (0,-1), 'East': (1,0), 'West': (-1,0)}[back_action]
+                x, y = current
+                current = (int(x + dx), int(y + dy))
+    """
+    
 
 # Abbreviations
 bfs = breadthFirstSearch
