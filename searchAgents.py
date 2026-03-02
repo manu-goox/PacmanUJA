@@ -157,9 +157,90 @@ class TestAgent(Agent):
             self.actionIndex += 1
             return action
         return Directions.STOP
-        
 
 
+
+class TestAgentdfs(Agent):
+    """
+    Agente buscador DFS (búsqueda en profundidad).
+    Misma base que el explorador, con sufijo 'dfs' (requisito del guion).
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.actions = []
+        self.actionIndex = 0
+
+    def registerInitialState(self, state):
+        """
+        Se ejecuta una sola vez al inicio.
+        Calcula el plan con DFS hasta el objetivo.
+        """
+        start_time = time.time()
+
+        problem = PositionSearchProblem(state)
+
+        self.actions = search.depthFirstSearch(problem)
+        self.actionIndex = 0
+
+        elapsed = time.time() - start_time
+        cost = problem.getCostOfActions(self.actions)
+
+        print('=== TestAgentdfs - Resultados DFS ===')
+        print(f'  Coste acumulado:   {cost}')
+        print(f'  Pasos (len plan):  {len(self.actions)}')
+        if "_expanded" in dir(problem):
+            print(f'  Nodos expandidos:  {problem._expanded}')
+        print(f'  Tiempo cómputo:    {elapsed:.3f}s')
+        print('=====================================')
+
+    def getAction(self, state):
+        if self.actionIndex < len(self.actions):
+            action = self.actions[self.actionIndex]
+            self.actionIndex += 1
+            return action
+        return Directions.STOP
+
+
+
+
+
+class TestAgentbae(Agent):
+    """
+    Agente A* (BAE). Mismo nombre que el explorador + sufijo 'bae'.
+    Usa heurística Manhattan (obligatorio en esta actividad).
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.actions = []
+        self.actionIndex = 0
+
+    def registerInitialState(self, state):
+        start_time = time.time()
+
+        problem = PositionSearchProblem(state)
+
+        self.actions = search.aStarSearch(problem, heuristic=manhattanHeuristic)
+        self.actionIndex = 0
+
+        elapsed = time.time() - start_time
+        cost = problem.getCostOfActions(self.actions)
+
+        print('=== TestAgentbae - Resultados A* ===')
+        print(f'  Coste acumulado:   {cost}')
+        print(f'  Pasos (len plan):  {len(self.actions)}')
+        if "_expanded" in dir(problem):
+            print(f'  Nodos expandidos:  {problem._expanded}')
+        print(f'  Tiempo cómputo:    {elapsed:.3f}s')
+        print('====================================')
+
+    def getAction(self, state):
+        if self.actionIndex < len(self.actions):
+            action = self.actions[self.actionIndex]
+            self.actionIndex += 1
+            return action
+        return Directions.STOP
 
 #######################################################
 # This portion is written for you, but will only work #
@@ -184,9 +265,7 @@ class SearchAgent(Agent):
     """
 
     def __init__(self, fn='depthFirstSearch', prob='PositionSearchProblem', heuristic='nullHeuristic'):
-        # Warning: some advanced Python magic is employed below to find the right functions and problems
 
-        # Get the search function from the name and heuristic
         if fn not in dir(search):
             raise AttributeError(fn + ' is not a search function in search.py.')
         func = getattr(search, fn)
@@ -201,10 +280,8 @@ class SearchAgent(Agent):
             else:
                 raise AttributeError(heuristic + ' is not a function in searchAgents.py or search.py.')
             print('[SearchAgent] using function %s and heuristic %s' % (fn, heuristic))
-            # Note: this bit of Python trickery combines the search algorithm and the heuristic
             self.searchFunction = lambda x: func(x, heuristic=heur)
 
-        # Get the search problem type from the name
         if prob not in globals().keys() or not prob.endswith('Problem'):
             raise AttributeError(prob + ' is not a search problem type in SearchAgents.py.')
         self.searchType = globals()[prob]
@@ -268,7 +345,7 @@ class PositionSearchProblem(search.SearchProblem):
         self.startState = gameState.getPacmanPosition()
         if start != None: self.startState = start
         print(f"OBJETIVO EN: {gameState.goal}")
-        self.goal = gameState.goal if gameState.goal is not None else (1,1)  # NUEVO: Usa el objetivo definido en el layout
+        self.goal = gameState.goal if gameState.goal is not None else (1,1)
         print(f"OBJETIVO EN: {self.goal}")
         self.costFn = costFn
         self.visualize = visualize
@@ -276,7 +353,6 @@ class PositionSearchProblem(search.SearchProblem):
         if warn and (gameState.getNumFood() != 1 or not gameState.hasFood(*goal)):
             print('Warning: this does not look like a regular search maze')
 
-        # For display purposes
         self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
 
     def getStartState(self):
@@ -285,7 +361,6 @@ class PositionSearchProblem(search.SearchProblem):
     def isGoalState(self, state):
         isGoal = state == self.goal
 
-        # For display purposes only
         if isGoal and self.visualize:
             self._visitedlist.append(state)
             import __main__
@@ -317,8 +392,7 @@ class PositionSearchProblem(search.SearchProblem):
                 cost = self.costFn(nextState)
                 successors.append( ( nextState, action, cost) )
 
-        # Bookkeeping for display purposes
-        self._expanded += 1 # DO NOT CHANGE
+        self._expanded += 1
         if state not in self._visited:
             self._visited[state] = True
             self._visitedlist.append(state)
@@ -334,7 +408,6 @@ class PositionSearchProblem(search.SearchProblem):
         x,y= self.getStartState()
         cost = 0
         for action in actions:
-            # Check figure out the next state and see whether its' legal
             dx, dy = Actions.directionToVector(action)
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999

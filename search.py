@@ -89,8 +89,29 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start = problem.getStartState()
+    if problem.isGoalState(start):
+        return []
+
+    frontier = util.Stack()
+    frontier.push((start, []))  # (state, path_actions)
+    explored = set()
+
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if state in explored:
+            continue
+        explored.add(state)
+
+        if problem.isGoalState(state):
+            return actions
+
+        for succ, action, stepCost in problem.getSuccessors(state):
+            if succ not in explored:
+                frontier.push((succ, actions + [action]))
+
+    return []
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
@@ -111,8 +132,34 @@ def nullHeuristic(state, problem=None) -> float:
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start = problem.getStartState()
+    if problem.isGoalState(start):
+        return []
+
+    frontier = util.PriorityQueue()
+
+    frontier.push((start, [], 0), heuristic(start, problem))
+
+    best_g = {start: 0}
+
+    while not frontier.isEmpty():
+        state, actions, g = frontier.pop()
+
+        if g > best_g.get(state, float("inf")):
+            continue
+
+        if problem.isGoalState(state):
+            return actions
+
+        for succ, action, stepCost in problem.getSuccessors(state):
+            new_g = g + stepCost
+            if new_g < best_g.get(succ, float("inf")):
+                best_g[succ] = new_g
+                new_actions = actions + [action]
+                f = new_g + heuristic(succ, problem)
+                frontier.push((succ, new_actions, new_g), f)
+
+    return []
 
 
 def exploration(problem):
