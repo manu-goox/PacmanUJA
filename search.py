@@ -225,7 +225,7 @@ def exploration(problem):
             # Actualizamo la posicion actual
             current = next_state
 
-        elif next_move is None:
+        else:
             if not path_stack:
                 break
             
@@ -241,42 +241,7 @@ def exploration(problem):
             x, y = current
             current = (int(x + dx), int(y + dy))           
 
-    
     return actions
-
-    """
-        while True:
-            # Buscamos un sucesor no visitado desde la celda actual
-            successors = problem.getSuccessors(current)
-            next_move = None
-
-            # Bucle para encontrar la siguiente celda adyacente no visitada
-            for next_state, action, _ in successors:
-                if next_state not in visited:
-                    next_move = (next_state, action)
-                    break
-            
-            if next_move is not None:
-                # Hay celda nueva: avanzamos hacia ella
-                next_state, action = next_move
-                visited.add(next_state)
-                #actions.append(action)
-                path_stack.append(action)
-                current = next_state
-            else:
-                # No hay celda nueva: retrocedemos un paso
-                if not path_stack:
-                    # Hemos vuelto al inicio y no quedan celdas nuevas: fin
-                    break
-                last_action = path_stack.pop()
-                back_action = opposite[last_action]
-                actions.append(back_action)
-                # Recalculamos la posición actual retrocediendo
-                dx, dy = {'North': (0,1), 'South': (0,-1), 'East': (1,0), 'West': (-1,0)}[back_action]
-                x, y = current
-                current = (int(x + dx), int(y + dy))
-    """
-    
 
 # Abbreviations
 bfs = breadthFirstSearch

@@ -56,7 +56,7 @@ class GoWestAgent(Agent):
 class ExplorationProblem(search.SearchProblem):
     """
     Problema auxiliar para TestAgent.
-    No tiene objetivo: el agente explora todo lo posible.
+    El agente explora todo lo posible.
     Registra celdas visitadas para las estadísticas de la Actividad 2.
     """
 
@@ -108,6 +108,11 @@ class TestAgent(Agent):
     """
     Agente explorador que recorre el mayor número posible de celdas
     del laberinto usando DFS con backtracking (función exploration en search.py).
+
+    Características:
+        - Su objetivo es explorar todo el laberinto
+        - Incluye backtracking explícito en las acciones para que Pacman físicamente recorra todas las celdas
+        - No es un DFS clásico sino una variante adaptada para maximizar cobertura
 
     Gestiona internamente:
       - self.actions: plan completo calculado al inicio
@@ -186,9 +191,11 @@ class TestAgentdfs(Agent):
         elapsed = time.time() - start_time
         cost = problem.getCostOfActions(self.actions)
 
+        total_steps = len(self.actions)
+
         print('=== TestAgentdfs - Resultados DFS ===')
-        print(f'  Coste acumulado:   {cost}')
-        print(f'  Pasos (len plan):  {len(self.actions)}')
+        print(f'  Coste acumulado:         {cost}')
+        print(f'  Total de pasos:          {total_steps}')
         if "_expanded" in dir(problem):
             print(f'  Nodos expandidos:  {problem._expanded}')
         print(f'  Tiempo cómputo:    {elapsed:.3f}s')
@@ -200,9 +207,6 @@ class TestAgentdfs(Agent):
             self.actionIndex += 1
             return action
         return Directions.STOP
-
-
-
 
 
 class TestAgentbae(Agent):
@@ -226,10 +230,11 @@ class TestAgentbae(Agent):
 
         elapsed = time.time() - start_time
         cost = problem.getCostOfActions(self.actions)
+        total_steps = len(self.actions)
 
         print('=== TestAgentbae - Resultados A* ===')
-        print(f'  Coste acumulado:   {cost}')
-        print(f'  Pasos (len plan):  {len(self.actions)}')
+        print(f'  Coste acumulado:         {cost}')
+        print(f'  Total de pasos:          {total_steps}')
         if "_expanded" in dir(problem):
             print(f'  Nodos expandidos:  {problem._expanded}')
         print(f'  Tiempo cómputo:    {elapsed:.3f}s')
@@ -443,11 +448,6 @@ class MiAgente_DFS(SearchAgent):
     def __init__(self):
         self.searchFunction = search.depthFirstSearch
         self.searchType = lambda state: PositionSearchProblem(state)
-        
-        
-        
-        
-        
 
 def manhattanHeuristic(position, problem, info={}):
     "The Manhattan distance heuristic for a PositionSearchProblem"
