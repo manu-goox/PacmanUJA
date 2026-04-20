@@ -168,7 +168,7 @@ class GameState:
     Returns a Grid of boolean wall indicator variables.
 
     Grids can be accessed via list notation, so to check
-    if there is a wall at (x,y), just call
+    if there is food at (x,y), just call
 
     walls = state.getWalls()
     if walls[x][y] == True: ...
@@ -196,7 +196,7 @@ class GameState:
     """
     Generates a new state by copying information from its predecessor.
     """
-    if prevState is not None: # Initial state
+    if prevState != None: # Initial state
       self.data = GameStateData(prevState.data)
     else:
       self.data = GameStateData()
@@ -307,10 +307,7 @@ class PacmanRules:
     """
     Returns a list of possible actions.
     """
-    possibleActions = Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
-    if Directions.STOP in possibleActions:
-      possibleActions.remove( Directions.STOP )
-    return possibleActions
+    return Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
   getLegalActions = staticmethod( getLegalActions )
 
   def applyAction( state, action ):
@@ -477,6 +474,8 @@ def readCommand( argv ):
                     metavar='TYPE', default='KeyboardAgent')
   parser.add_option('-t', '--textGraphics', action='store_true', dest='textGraphics',
                     help='Display output as text only', default=False)
+  parser.add_option('-m', '--terminalGraphics', action='store_true', dest='terminalGraphics',
+                    help='Display output as terminalGraphics', default=False)
   parser.add_option('-q', '--quietTextGraphics', action='store_true', dest='quietGraphics',
                     help='Generate minimal output and no graphics', default=False)
   parser.add_option('-g', '--ghosts', dest='ghost',
@@ -522,6 +521,9 @@ def readCommand( argv ):
   if options.numTraining > 0:
     args['numTraining'] = options.numTraining
     if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
+  if options.terminalGraphics and options.pacman == 'KeyboardAgent':
+      import keyboardAgents
+      keyboardAgents.USE_CURSE = True
   pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
   args['pacman'] = pacman
 
@@ -542,6 +544,10 @@ def readCommand( argv ):
     import textDisplay
     textDisplay.SLEEP_TIME = options.frameTime
     args['display'] = textDisplay.PacmanGraphics()
+  elif options.terminalGraphics:
+    import textDisplay
+    textDisplay.SLEEP_TIME = options.frameTime
+    args['display'] = textDisplay.CurseDisplay()
   else:
     import graphicsDisplay
     args['display'] = graphicsDisplay.PacmanGraphics(options.zoom, frameTime = options.frameTime)
@@ -622,7 +628,7 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
     else:
         gameDisplay = display
         rules.quiet = False
-    game = rules.newGame(layout, pacman, ghosts, gameDisplay, beQuiet, catchExceptions)
+    game = rules.newGame( layout, pacman, ghosts, gameDisplay, beQuiet, catchExceptions)
     game.run()
     if not beQuiet: games.append(game)
 

@@ -1,6 +1,9 @@
 from game import Agent
 from game import Directions
 import random
+import textDisplay
+
+USE_CURSE = False
 
 class KeyboardAgent(Agent):
   """
@@ -20,9 +23,15 @@ class KeyboardAgent(Agent):
     self.keys = []
     
   def getAction( self, state):
-    from graphicsUtils import keys_waiting
-    from graphicsUtils import keys_pressed
-    keys = keys_waiting() + keys_pressed()
+    global USE_CURSE
+    if USE_CURSE :
+        textDisplay.CURSE_WINDOW.nodelay(0)
+        key = textDisplay.CURSE_WINDOW.getch()
+        keys = [chr(key)]
+    else:
+        from graphicsUtils import keys_waiting
+        from graphicsUtils import keys_pressed
+        keys = keys_waiting() + keys_pressed()
     if keys != []:
       self.keys = keys
     
