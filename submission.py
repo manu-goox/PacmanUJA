@@ -291,23 +291,88 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
-    """
-      Your minimax agent with alpha-beta pruning (problem 2)
-      You may reference the pseudocode for Alpha-Beta pruning here:
-      en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning#Pseudocode
-    """
-    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
-    	super().__init__(evalFn,depth)
-    	self.__numMovimientos = 0
-    	
-    def getAction(self, gameState: GameState) -> str:
-        """
-          Returns the minimax action using self.depth and self.evaluationFunction
-        """
 
-        # BEGIN_YOUR_CODE (our solution is 43 lines of code, but don't worry if you deviate from this)
-        raise Exception("Not implemented yet")
-        # END_YOUR_CODE
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        super().__init__(evalFn, depth)
+        self.__numMovimientos = 0
+
+    def getAction(self, gameState: GameState) -> str:
+        self.__numMovimientos += 1
+
+        def alphabeta(state: GameState, depth: int, agentIndex: int, alpha: float, beta: float) -> float:
+
+            if state.isWin() or state.isLose():
+                return state.getScore()
+
+            if depth == self.depth:
+                return self.evaluationFunction(state)
+
+            legalActions = state.getLegalActions(agentIndex)
+
+            if not legalActions:
+                return state.getScore()
+
+            if agentIndex == 0:
+                value = float('-inf')
+
+                for action in legalActions:
+                    successor = state.generateSuccessor(agentIndex, action)
+                    value = max(value, alphabeta(successor, depth, 1, alpha, beta))
+
+                    if value > beta:
+                        return value
+
+                    alpha = max(alpha, value)
+
+                return value
+
+            else:
+                value = float('inf')
+
+                for action in legalActions:
+                    successor = state.generateSuccessor(agentIndex, action)
+                    value = min(value, alphabeta(successor, depth + 1, 0, alpha, beta))
+
+                    if value < alpha:
+                        return value
+
+                    beta = min(beta, value)
+
+                return value
+
+        legalPacmanActions = gameState.getLegalActions(0)
+
+        if Directions.STOP in legalPacmanActions:
+            legalPacmanActions.remove(Directions.STOP)
+
+        if not legalPacmanActions:
+            return Directions.STOP
+
+        bestValue = float('-inf')
+        bestActions = []
+        alpha = float('-inf')
+        beta = float('inf')
+
+        for action in legalPacmanActions:
+            successor = gameState.generateSuccessor(0, action)
+            value = alphabeta(successor, 0, 1, alpha, beta)
+
+            if value > bestValue:
+                bestValue = value
+                bestActions = [action]
+            elif value == bestValue:
+                bestActions.append(action)
+
+            alpha = max(alpha, bestValue)
+
+        chosen = random.choice(bestActions)
+
+        nextState = gameState.generateSuccessor(0, chosen)
+
+        if nextState.isWin() or nextState.isLose():
+            print("Movimientos totales:", self.__numMovimientos)
+
+        return chosen
 
 ######################################################################################
 # Problem 3b: implementing expectimax
@@ -421,9 +486,7 @@ def betterEvaluationFunction(currentGameState: GameState) -> float:
       Your extreme, unstoppable evaluation function (problem 4). Note that you can't fix a seed in this function.
     """
 
-    # BEGIN_YOUR_CODE (our solution is 16 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
-    # END_YOUR_CODE
+    return scoreEvaluationFunction(currentGameState)
 
 
 # Abbreviation
