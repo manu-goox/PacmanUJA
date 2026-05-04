@@ -1,40 +1,33 @@
-# 🟡 Pacman AI – Exploración y Algoritmos de Búsqueda
+# Installation
 
-Proyecto académico de **Inteligencia Artificial (Curso 2025/2026)** centrado en la implementación y análisis de agentes inteligentes en el entorno clásico de :contentReference[oaicite:0]{index=0}.
+### Prerequisites
 
-El objetivo es desarrollar distintos agentes capaces de explorar y resolver laberintos utilizando estrategias de búsqueda no informadas e informadas.
+Ensure that you're using Python version 3.12. If you have a different version, you might experience GUI-related issues. Check your Python version by running:
+```
+python --version
+```
 
----
+### Installing
 
-## 🎯 Objetivos del Proyecto
+After installing Miniconda, set up your environment with the following commands:
+```
+conda create --name cs221-hw5 python=3.12
+conda activate cs221-hw5
+This homework does not require any additional packages, so feel free to reuse the conda environment you installed earlier for previous homeworks.
+```
 
-- Implementar un **agente explorador**.
-- Implementar **Depth-First Search (DFS)**.
-- Implementar **A\*** (A-Star Search).
-- Diseñar y evaluar **funciones heurísticas**.
-- Analizar el comportamiento en entornos mono-agente y multi-agente.
+# Pacman instructions
 
----
+Pacman extra credit should be uploaded as a separate gradescope assignment. To
+do so, note grader_ec.py is the same as grader.py but adds only question 4 to
+the extra credit. Run `publish-assignment.py` one with the original grader.py
+to make the main programming assignment, and once with `grader_ec.py`
+overwriting `grader.py` to make the extra credit assignment.
 
-## 🧠 Algoritmos Implementados
+# Other instructions
 
-### 🔎 Exploración
-Agente orientado a maximizar el número de casillas visitadas, gestionando memoria interna para evitar ciclos y repeticiones innecesarias.
+To play, type:   python pacman.py
 
-### 🌲 DFS (Búsqueda en Profundidad)
-- Estrategia no informada.
-- Uso de pila (Stack).
-- No utiliza heurística.
+For help, type:  python pacman.py -h
 
-### ⭐ A*
-- Estrategia informada.
-- Uso de cola de prioridad (PriorityQueue).
-- Implementación de heurística admisible.
-- Garantiza solución óptima (si la heurística es consistente).
-
----
-
-## 🗂 Estructura del Proyecto
-
-Solo se modifican:
-
+See http://inst.eecs.berkeley.edu/~cs188 for more information.
