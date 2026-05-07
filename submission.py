@@ -235,16 +235,21 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 bestValue = float('-inf')
                 for action in legalActions:
                     successor = state.generateSuccessor(agentIndex, action)
+                    # Después de Pacman viene el primer fantasma (agente 1)
                     bestValue = max(bestValue, minimax(successor, depth, 1))
                 return bestValue
 
             # Nodo MIN: fantasma elige el menor valor.
-            # depth solo aumenta al volver a Pacman porque eso marca una ronda completa.
+            # La profundidad solo aumenta al volver a Pacman (completo un ciclo de turnos)
+            numAgents = state.getNumAgents()
+            nextAgent = (agentIndex + 1) % numAgents
+            nextDepth = depth + 1 if nextAgent == 0 else depth
+
             bestValue = float('inf')
-            
+
             for action in legalActions:
                 successor = state.generateSuccessor(agentIndex, action)
-                bestValue = min(bestValue, minimax(successor, depth + 1, 0))
+                bestValue = min(bestValue, minimax(successor, nextDepth, nextAgent))
             return bestValue
 
         # En la raíz, Pacman selecciona la mejor acción según el valor MiniMax.
@@ -277,11 +282,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         chosen = random.choice(bestActions)
 
-        # Miramos si el siguiente estado termina el juego
-        nextState = gameState.generateSuccessor(0, chosen)
-
-        if nextState.isWin() or nextState.isLose():
-            print("Movimientos totales:", self.__numMovimientos)
+        # Seguimiento de movimientos ejecutados
+        print(f"Movimiento #{self.__numMovimientos}")
 
         return chosen
         # END_YOUR_CODE
@@ -327,11 +329,16 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 return value
 
             else:
+                # Nodos MIN (fantasmas): depth solo aumenta al volver a Pacman
+                numAgents = state.getNumAgents()
+                nextAgent = (agentIndex + 1) % numAgents
+                nextDepth = depth + 1 if nextAgent == 0 else depth
+
                 value = float('inf')
 
                 for action in legalActions:
                     successor = state.generateSuccessor(agentIndex, action)
-                    value = min(value, alphabeta(successor, depth + 1, 0, alpha, beta))
+                    value = min(value, alphabeta(successor, nextDepth, nextAgent, alpha, beta))
 
                     if value < alpha:
                         return value
@@ -367,10 +374,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
         chosen = random.choice(bestActions)
 
-        nextState = gameState.generateSuccessor(0, chosen)
-
-        if nextState.isWin() or nextState.isLose():
-            print("Movimientos totales:", self.__numMovimientos)
+        # Seguimiento de movimientos ejecutados
+        print(f"Movimiento #{self.__numMovimientos}")
 
         return chosen
 
@@ -417,13 +422,17 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                     bestValue = max(bestValue, expectimax(successor, depth, 1))
                 return bestValue
 
-            # AZAR (fantasma)
+            # AZAR (fantasma): depth solo aumenta al volver a Pacman
+            numAgents = state.getNumAgents()
+            nextAgent = (agentIndex + 1) % numAgents
+            nextDepth = depth + 1 if nextAgent == 0 else depth
+
             total = 0.0
             probability = 1.0 / len(legalActions)
 
             for action in legalActions:
                 successor = state.generateSuccessor(agentIndex, action)
-                total += probability * expectimax(successor, depth + 1, 0)
+                total += probability * expectimax(successor, nextDepth, nextAgent)
 
             return total
 
@@ -464,15 +473,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         chosen = random.choice(bestActions)
 
-        # 🔴 guardar historial
+        # guardar historial de posiciones para evitar bucles
         self.recentPositions.append(gameState.getPacmanPosition())
         self.lastAction = chosen
 
-        # Miramos si el estado actual termina el juego
-        nextState = gameState.generateSuccessor(0, chosen)
-
-        if nextState.isWin() or nextState.isLose():
-            print("Movimientos totales:", self.__numMovimientos)
+        # Seguimiento de movimientos ejecutados
+        print(f"Movimiento #{self.__numMovimientos}")
 
         return chosen
 
@@ -483,10 +489,83 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
 def betterEvaluationFunction(currentGameState: GameState) -> float:
     """
-      Your extreme, unstoppable evaluation function (problem 4). Note that you can't fix a seed in this function.
+    Evaluación mejorada para el juego de Pacman.
+    Considera múltiples factores alémás del marcador básico.
     """
+    # Estados terminalesy su valor extremo
+    if currentGameState.isWin():
+        return 1e9
+    if currentGameState.isLose():
+        return -1e9
 
-    return scoreEvaluationFunction(currentGameState)
+    # Información del estado actual
+    pacmanPos = currentGameState.getPacmanPosition()
+    score = currentGameState.getScore()
+    food = currentGameState.getFood()
+    foodList = food.asList()
+    ghostStates = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+
+    # --- Comida ---
+    # Cuanta menos comida quede, mejor
+    foodScore = 0
+    if foodList:
+        # Distancia a la comida más cercana (más cerca = mejor)
+        minFoodDist = min(manhattanDistance(pacmanPos, f) for f in foodList)
+        foodScore += 15.0 / (minFoodDist + 1)
+        # Penalización por cantidad de comida restante
+        foodScore -= 3.5 * len(foodList)
+        # Bonus por tener comida cerca en línea recta
+        avgFoodDist = sum(manhattanDistance(pacmanPos, f) for f in foodList) / len(foodList)
+        foodScore += 5.0 / (avgFoodDist + 1)
+    else:
+        # Tablero vacío = victoria asegurada
+        foodScore += 100
+
+    # --- Fantasmas ---
+    ghostScore = 0
+    for ghost in ghostStates:
+        ghostPos = ghost.getPosition()
+        dist = manhattanDistance(pacmanPos, ghostPos)
+
+        if ghost.scaredTimer > 0:
+            # Fantasma asustado = oportunidad de comerlo
+            # Mientras más cerca, mejor (pero no demasiado para no morir)
+            if dist > 0:
+                ghostScore += 8.0 / dist
+            # Bonus extra por tiempo restante de scare
+            ghostScore += 0.5 * ghost.scaredTimer
+        else:
+            # Fantasma activo = peligro
+            if dist <= 1:
+                # Demasiado cerca - penalización fuerte
+                ghostScore -= 150
+            elif dist <= 3:
+                # Zona de peligro próximo
+                ghostScore -= 25 / dist
+            else:
+                # Lejos - penalización menor
+                ghostScore -= 3.0 / dist
+
+    # --- Cápsulas (power pellets) ---
+    capsuleScore = 0
+    if capsules:
+        # Las cápsulas son valiosas - nos dan poder comer fantasmas
+        minCapsuleDist = min(manhattanDistance(pacmanPos, c) for c in capsules)
+        capsuleScore += 20.0 / (minCapsuleDist + 1)
+        capsuleScore += 10 * len(capsules)
+    else:
+        # Sin cápsulas = sin poder de eat ghosts temporalmente
+        # Pero si hay fantasmas asustados, no importa
+        scaredCount = sum(1 for g in ghostStates if g.scaredTimer > 0)
+        if scaredCount == 0:
+            capsuleScore -= 5
+
+    # --- Marcador base ---
+    # El marcador del juego ya incluye información valiosa
+    baseScore = score * 0.1
+
+    return foodScore + ghostScore + capsuleScore + baseScore
 
 
 # Abbreviation
